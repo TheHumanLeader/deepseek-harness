@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/proposed/architecture/2026-08-14-governed-global-agent-hierarchy.md
+2026-08-14-governed-global-agent-hierarchy.md: b94d9c1d2c7c64063b8b773fdde5559a4740fc22
+2026-08-14-governed-global-agent-hierarchy.zh.md: 1752fedfde632968f99b9f5dbb5dfff8c8f75994
