@@ -1,6 +1,6 @@
 # Agent Note: Helping agents follow instructions and stop unproductive searches
 
-Status: proposed
+Status: implemented
 
 English | [中文](2026-08-14-governed-global-agent-hierarchy.zh.md)
 
@@ -19,19 +19,19 @@ Hermes already has prompts, Agent configuration, project configuration, and plug
 >
 > To harness it, even a fine horse needs a good saddle.
 
-## Proposal
+## Decision
 
 ### Visual global prompt configuration
 
-Hermes will add global prompt configuration. It serves a role similar to Codex's `AGENTS.md`: it provides persistent user instructions to every project, but users view and edit it directly in Settings instead of managing prompt files.
+Hermes provides global prompt configuration. It serves a role similar to Codex's `AGENTS.md`: it provides persistent user instructions to every project, but users view and edit it directly in Settings instead of managing prompt files.
 
 The global prompt records how the user wants Agents to work in every project. Examples include answering before executing, reading user-provided material first, delegating external research to `researcher`, and stopping when searches add no new information.
 
-Settings will provide editing, preview, reset, and enable controls. Prompt changes apply only to new sessions so an active session does not change underneath the user.
+Settings provides editing, preview, reset, and enable controls. After saving, the current session and new sessions read the latest prompt from the next model request; users do not need to reopen a session.
 
 ### Clearer multi-Agent configuration
 
-Agent settings will contain one global main Agent, four built-in helper Agents, and user-created Agents.
+Agent settings contain one global main Agent, four built-in helper Agents, and user-created Agents.
 
 #### Global main Agent
 
@@ -62,7 +62,7 @@ Each project can define its own prompt for project rules, technical requirements
 
 By default, a project uses both the global prompt and the project prompt. Users may select “Exclude global prompt” so the project uses only its project prompt. This option excludes only the user-configured global prompt, not system rules that Hermes must retain.
 
-At session start, Hermes records the global prompt, project prompt, and Agent configurations used for that session. Later setting changes affect only new sessions.
+Before each model request, Hermes reads the latest global prompt, project prompt, and Agent configuration. When configuration changes, Hermes records the new configuration in the session log and marks it as replacing the earlier configuration.
 
 ### Complete the plugin list information
 
@@ -90,7 +90,7 @@ Each of the following approaches improves part of the problem but is incomplete 
 
 **Add new core model tools.** The two problems come from incomplete prompts, Agent responsibilities, and plugin descriptions. Completing the existing features addresses them without expanding the core tool list.
 
-## Acceptance criteria
+## Verification
 
 - Settings provides a global prompt that users can edit, preview, enable, and reset.
 - Settings provides one global main Agent, four non-deletable built-in helper Agents, and an entry point for creating ordinary Agents.
@@ -99,13 +99,13 @@ Each of the following approaches improves part of the problem but is incomplete 
 - `researcher` follows one research standard and stops when the question is answered, the material is sufficient, or consecutive searches add no useful information.
 - A project can use global and project prompts together or explicitly exclude the user-configured global prompt.
 - The plugin list shows purpose, features, read and write behavior, network and credential requirements, Agent access, runtime state, failure reason, and documentation.
-- Configuration changes affect only new sessions and do not alter active sessions.
-- Tests cover global-prompt inheritance, the project exclusion option, non-deletable built-in Agents, tool permissions, research stopping, and fixed session configuration.
+- Configuration changes apply to current and new sessions from the next model request; the session log preserves each configuration actually used.
+- Tests cover global-prompt inheritance, the project exclusion option, non-deletable built-in Agents, tool permissions, research stopping, and live configuration updates.
 
-## Risks
+## Consequences
 
-- Global and project prompts may conflict. The interface must show the final combined prompt, and the project exclusion option must state exactly what it excludes.
-- Four built-in helpers add content to Agent settings. The interface should show names and purposes first and expand prompts, models, and tool permissions on demand.
-- The main Agent may fail to delegate research to `researcher`. Its system prompt must state the default division of work, and real-session tests must verify it.
-- `researcher` may stop too early. It must report the material found, information still missing, and its stop reason, and the user may explicitly request more research.
-- Plugin information may become stale. Each plugin should own its description, and required fields should be validated when the plugin loads.
+- Global and project prompts can conflict. The interface states exactly what the project exclusion option removes, and the model-visible snapshot records the final combination.
+- Four built-in helpers add content to Agent settings. The interface shows their names and purposes first and expands detailed configuration on demand.
+- The main Agent can still choose not to delegate. Its current snapshot names each helper and assigns external research to `researcher`; real-session snapshots pin that instruction.
+- `researcher` can stop too early. Its default prompt requires the sources found, missing information, and stop reason, and the user can explicitly request more research.
+- Plugin details are derived from package metadata and explicit runtime classification. A failed Cordis Fiber exposes only a direct instruction to inspect the Host log because Cordis keeps the recorded error private.

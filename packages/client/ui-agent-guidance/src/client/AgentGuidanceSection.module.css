@@ -64,22 +64,26 @@
   font-weight: 600;
 }
 
-.textarea {
+.field textarea,
+.field input {
   margin-top: 6px;
   width: 100%;
   box-sizing: border-box;
-  resize: vertical;
-  min-height: 220px;
   border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 10px;
-  padding: 12px;
+  padding: 10px 12px;
   background: var(--dsw-alias-bg-layer-3);
   color: var(--dsw-alias-label-primary);
   font: inherit;
   line-height: 1.6;
 }
 
-.textarea:focus-visible {
+.field textarea {
+  resize: vertical;
+}
+
+.field textarea:focus-visible,
+.field input:focus-visible {
   outline: 2px solid var(--dsw-alias-brand-primary);
   outline-offset: 1px;
 }
@@ -116,4 +120,104 @@
 
 .status {
   color: var(--dsw-alias-label-tertiary);
+}
+
+.panel,
+.agentCard {
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--dsw-alias-bg-layer-2);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panelHeading,
+.groupHeading,
+.agentCard summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panelHeading h3,
+.groupHeading h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.panelHeading span,
+.agentCard em {
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: var(--dsw-alias-bg-layer-3);
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.groupHeading p {
+  margin: 4px 0 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.agentGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.agentCard {
+  padding: 0;
+}
+
+.agentCard summary {
+  cursor: pointer;
+  padding: 14px 16px;
+  list-style: none;
+}
+
+.agentCard summary span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.agentCard summary small {
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agentBody {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-top: 1px solid var(--dsw-alias-border-l2);
+  padding: 16px;
+}
+
+@media (max-width: 680px) {
+  .columns { grid-template-columns: 1fr; }
 }

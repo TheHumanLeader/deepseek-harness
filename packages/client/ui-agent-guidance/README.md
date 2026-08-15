@@ -2,27 +2,21 @@
 
 English | [中文](README.zh.md)
 
-Web Settings page for the global main-Agent instructions owned by `@deepseek-ai/dsh-agent-guidance`. It edits the `agent-guidance` settings namespace and states that changes affect only main-Agent sessions started afterward.
+Web Settings page for the `agent-guidance` namespace. One page manages the global main-Agent prompt, project prompts, the project option that excludes the global prompt, four non-deletable built-in helpers, and user-created helpers.
 
-The page can enable or disable the instructions, edit their text, restore the deployment default, and preview the exact editable content. A remote or read-only deployment shows the namespace as unavailable or read-only instead of pretending that a write succeeded.
+Each helper editor contains its id, name, purpose, prompt, optional provider and model, exact tool allow-list, and delegation option. Built-in helpers can be edited but not deleted or allowed to delegate. Saving takes effect from the next model request in current and new sessions.
+
+The browser package sends no model content itself. `@deepseek-ai/dsh-agent-guidance` owns rendering, durable snapshots, project matching, built-in restoration, and live delegation resolution.
 
 ## Model Experience
 
-### Settings-authored instructions
-
-#### What the model sees
-
-This browser package sends no content to the model itself. The Host package captures the saved prompt in the next top-level session; its README defines the complete model-visible wrapper.
-
-#### Token effect
-
-No direct token effect. Saved text changes the bounded snapshot added by `dsh-agent-guidance` to later top-level sessions.
+Indirectly, through the live configuration applied by `@deepseek-ai/dsh-agent-guidance`. The page does not send model content.
 
 #### KV Cache effect
 
-No direct cache effect. The Host applies settings only to later sessions and keeps active sessions unchanged.
+Saving a change adds a new Agent-guidance snapshot before the next model request. An unchanged save adds nothing.
 
 ## Known Limitations and Deferred Work
 
-- **Global main Agent only** — project-level inheritance and auxiliary Agent management need their own settings surfaces.
-- **No mid-session edit** — this page intentionally does not alter instructions already captured by a running session.
+- Main-Agent model selection and full tool composition remain on the existing Models and Agent Presets pages.
+- A helper tool name is entered as text because the host does not yet expose a tool-name catalog to this page.

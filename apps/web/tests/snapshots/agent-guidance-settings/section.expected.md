@@ -7,9 +7,9 @@
     - button "模型":
       - img
       - text: 模型
-    - button "Agent 指令":
+    - button "Agent 配置":
       - img
-      - text: Agent 指令
+      - text: Agent 配置
     - button "插件":
       - img
       - text: 插件
@@ -20,13 +20,57 @@
   - button "关闭":
     - img
     - text: 关闭
-  - heading "全局主 Agent 指令" [level=2]
-  - paragraph: 统一设置主 Agent 在不同项目中的工作方式。
-  - paragraph: 修改只对之后开始的主 Agent 会话生效。正在运行的会话继续使用开始时的指令。
-  - checkbox "使用全局指令 辅助 Agent 不会收到这里的指令。" [checked]
+  - heading "Agent 配置" [level=2]
+  - paragraph: 统一管理主 Agent、项目指令和辅助 Agent。
+  - paragraph: 保存后，从下一次模型请求开始，当前会话和新会话都会读取最新配置。
+  - heading "全局主 Agent" [level=3]
+  - text: 系统内置
+  - checkbox "使用全局指令 项目可以单独排除这段全局指令。" [checked]
   - strong: 使用全局指令
-  - text: 辅助 Agent 不会收到这里的指令。 指令内容 填写适用于不同任务和项目的直接规则。
-  - textbox "指令内容 填写适用于不同任务和项目的直接规则。": Follow the stage the user requested. If the user asks for analysis, an estimate, a proposal, a review, or confirmation before action, provide only that result. Do not begin implementation or make changes until the user explicitly asks you to do so. Use material supplied by the user before searching. Every search must answer a specific unresolved question. Stop searching when the available material is sufficient, when the question is answered, or when another search adds no useful information.
-  - button "保存" [disabled]
+  - text: 项目可以单独排除这段全局指令。 提示词
+  - textbox "提示词": Follow the stage the user requested. If the user asks for analysis, an estimate, a proposal, a review, or confirmation before action, provide only that result. Do not begin implementation or make changes until the user explicitly asks you to do so. Use material supplied by the user before searching. Delegate external research to the researcher Agent. Do not repeat research or project reading already completed by a helper Agent. Stop when the available material is sufficient, the question is answered, or another search adds no useful information.
+  - heading "项目级指令" [level=3]
+  - paragraph: 按项目根目录匹配；更深的目录优先。
+  - button "添加项目"
+  - heading "辅助 Agent" [level=3]
+  - paragraph: 四个系统 Agent 可以调整但不能删除。其他 Agent 由用户创建和删除。
+  - button "创建 Agent"
+  - group:
+    - strong: Researcher
+    - text: Find and summarize external information.
+    - emphasis: 系统内置
+    - text: Agent ID
+    - textbox "Agent ID" [disabled]: researcher
+    - text: 名称
+    - textbox "名称": Researcher
+    - text: 用途
+    - textbox "用途": Find and summarize external information.
+    - text: 提示词
+    - textbox "提示词": Read material supplied by the user first. Prefer official and primary sources. Every search must answer one unresolved question. Stop when the question is answered, the material is sufficient, or another search adds no useful information. Report sources used, missing information, and why you stopped.
+    - text: 模型服务
+    - textbox "模型服务":
+      - /placeholder: 使用当前默认值
+    - text: 模型
+    - textbox "模型":
+      - /placeholder: 使用当前默认值
+    - text: 工具权限
+    - textbox "工具权限":
+      - /placeholder: 工具名用英文逗号分隔；留空表示这个辅助 Agent 不使用工具。
+      - text: web_search
+    - checkbox "允许这个 Agent 继续委派" [disabled]
+    - text: 允许这个 Agent 继续委派
+  - group:
+    - strong: Project explorer
+    - text: Inspect project code, documentation, and history without changing them.
+    - emphasis: 系统内置
+  - group:
+    - strong: Reviewer
+    - text: Check a result against the user request and project rules.
+    - emphasis: 系统内置
+  - group:
+    - strong: Agent manager
+    - text: Propose Agent, prompt, model, and tool-permission settings.
+    - emphasis: 系统内置
+  - button "保存全部" [disabled]
   - button "恢复默认"
-  - group: 主 Agent 将收到的内容
+  - group: 主 Agent 全局提示词预览

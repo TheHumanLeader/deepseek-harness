@@ -95,6 +95,22 @@ describe('PluginInventorySettingsTab', () => {
     expect(screen.getByText(en.emptySearch)).toBeTruthy()
   })
 
+  it('shows readable capability, data, access, failure, and documentation details', async () => {
+    const detailed = { entries: [{
+      entryId: 'detail', moduleName: '@fixture/tool-web', enabled: true, fiberPhase: 'failed',
+      purpose: 'Search official web sources.', features: ['web_search'], reads: 'Search queries.',
+      changes: 'Nothing.', sends: 'Search queries to the provider.', networkAccess: true, credentials: true,
+      agentAccess: 'researcher', unavailableReason: 'Provider unavailable.', documentation: 'https://example.test/readme',
+    }] } as unknown as Snapshot
+    render(<PluginInventorySettingsTab {...props(async () => detailed)} />)
+    fireEvent.click(await screen.findByRole('button', { name: 'tool-web, Mount failed, Enabled' }))
+    expect(screen.getByText('Search official web sources.')).toBeTruthy()
+    expect(screen.getByText('web_search')).toBeTruthy()
+    expect(screen.getByText('researcher')).toBeTruthy()
+    expect(screen.getByText('Provider unavailable.')).toBeTruthy()
+    expect(screen.getByRole('link', { name: en.documentation }).getAttribute('href')).toBe('https://example.test/readme')
+  })
+
   it('shows a generic failure and retries into the empty state', async () => {
     const list = vi.fn<PluginInventorySettingsTabInjected['list']>()
       .mockRejectedValueOnce(new Error('private transport detail'))

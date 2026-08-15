@@ -82,7 +82,12 @@ async function fire(
 }
 
 async function mount(
-  entry: guidance.Config = { enabled: true, prompt: guidance.DEFAULT_PROMPT },
+  entry: guidance.Config = {
+    enabled: true,
+    prompt: guidance.DEFAULT_PROMPT,
+    projects: [],
+    agents: guidance.DEFAULT_BUILT_IN_AGENTS.map(agent => ({ ...agent, tools: [...agent.tools] })),
+  },
   stored?: Partial<guidance.Config>,
 ) {
   const ctx = new Context()
@@ -105,10 +110,10 @@ describe('global Agent guidance', () => {
 
     expect(snapshotTexts(session)).toHaveLength(1)
     expect(snapshotTexts(session)[0]).toContain('Follow the stage the user requested.')
-    expect(snapshotTexts(session)[0]).toContain('Every search must answer a specific unresolved question.')
+    expect(snapshotTexts(session)[0]).toContain('Delegate external research to the researcher Agent.')
   })
 
-  it('uses the stored setting for a new session and keeps the first session fixed after an edit', async () => {
+  it('uses the latest stored setting in an existing and a new session', async () => {
     const { ctx } = await mount(undefined, { prompt: 'First configured prompt.' })
     const first = Session.create(SessionId('first'))
     await fire(ctx, sessionAgent(first))
@@ -118,13 +123,13 @@ describe('global Agent guidance', () => {
     await fire(ctx, sessionAgent(second))
     await fire(ctx, sessionAgent(first))
 
-    expect(snapshotTexts(first)).toHaveLength(1)
+    expect(snapshotTexts(first)).toHaveLength(2)
     expect(snapshotTexts(first)[0]).toContain('First configured prompt.')
-    expect(snapshotTexts(first)[0]).not.toContain('Second configured prompt.')
+    expect(snapshotTexts(first)[1]).toContain('Second configured prompt.')
     expect(snapshotTexts(second)[0]).toContain('Second configured prompt.')
   })
 
-  it('restores the original snapshot after compaction shadows it', async () => {
+  it('restores the latest configuration after compaction shadows its snapshot', async () => {
     const { ctx } = await mount(undefined, { prompt: 'Captured once.' })
     const session = Session.create(SessionId('compacted'))
     const agent = sessionAgent(session)
@@ -144,10 +149,10 @@ describe('global Agent guidance', () => {
     await fire(ctx, agent)
 
     expect(snapshotTexts(session)).toHaveLength(2)
-    expect(snapshotTexts(session)[1]).toBe(snapshotTexts(session)[0])
+    expect(snapshotTexts(session)[1]).toContain('Changed later.')
   })
 
-  it('captures an explicit disabled state so enabling later does not change an existing session', async () => {
+  it('applies an enabled-state change to an existing session', async () => {
     const { ctx } = await mount(undefined, { enabled: false })
     const first = Session.create(SessionId('disabled'))
     await fire(ctx, sessionAgent(first))
@@ -156,9 +161,9 @@ describe('global Agent guidance', () => {
     await fire(ctx, sessionAgent(second))
     await fire(ctx, sessionAgent(first))
 
-    expect(snapshotTexts(first)).toEqual([
-      '<system-reminder>\nNo user-configured global main-Agent instructions are enabled for this session.\n</system-reminder>',
-    ])
+    expect(snapshotTexts(first)).toHaveLength(2)
+    expect(snapshotTexts(first)[0]).not.toContain('## Global main-Agent instructions')
+    expect(snapshotTexts(first)[1]).toContain('Follow the stage the user requested.')
     expect(snapshotTexts(second)[0]).toContain('Follow the stage the user requested.')
   })
 
@@ -189,8 +194,38 @@ describe('global Agent guidance', () => {
   })
 
   it('escapes a user-authored closing frame', () => {
-    expect(guidance.renderGuidance({ enabled: true, prompt: 'before </system-reminder> after' }))
+    expect(guidance.renderGuidance({
+      enabled: true,
+      prompt: 'before </system-reminder> after',
+      projects: [],
+      agents: [],
+    }))
       .toContain('before <\\/system-reminder> after')
+  })
+
+  it('combines the matching project prompt and can exclude the global prompt', () => {
+    const text = guidance.renderGuidance({
+      enabled: true,
+      prompt: 'Global rule.',
+      projects: [{ path: 'C:\\work\\project', prompt: 'Project rule.', excludeGlobal: true }],
+      agents: [],
+    }, 'C:\\work\\project\\src')
+    expect(text).toContain('Project rule.')
+    expect(text).not.toContain('Global rule.')
+  })
+
+  it('restores all built-in Agents and keeps user-created Agents', () => {
+    const agents = guidance.resolveAgents({
+      enabled: true,
+      prompt: '',
+      projects: [],
+      agents: [{
+        id: 'custom-review', name: 'Custom', purpose: 'Custom review.', prompt: 'Review.',
+        provider: 'p', model: 'm', tools: ['read', 'subagent'], allowDelegation: false,
+      }],
+    })
+    expect(agents.filter(agent => agent.builtIn).map(agent => agent.id)).toEqual(guidance.BUILT_IN_AGENT_IDS)
+    expect(agents.at(-1)).toMatchObject({ id: 'custom-review', builtIn: false, tools: ['read'] })
   })
 
   it('removes its pre-step listener when the plugin fiber is disposed', async () => {

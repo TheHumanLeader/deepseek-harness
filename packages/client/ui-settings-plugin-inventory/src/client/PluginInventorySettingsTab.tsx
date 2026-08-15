@@ -56,7 +56,7 @@ function moduleShortName(moduleName: string): string {
 /** Whether an inventory row matches the local catalog query. */
 function matches(entry: PluginInventoryEntry, normalizedQuery: string): boolean {
   if (normalizedQuery.length === 0) return true
-  return [entry.moduleName, entry.entryId]
+  return [entry.moduleName, entry.entryId, entry.purpose, ...entry.features]
     .some(value => value.toLocaleLowerCase().includes(normalizedQuery))
 }
 
@@ -170,6 +170,7 @@ export function PluginInventorySettingsTab({ list, t }: PluginInventorySettingsT
                     </button>
                     {open ? (
                       <div className={css.cardDetails} id={detailId}>
+                        <p>{entry.purpose}</p>
                         <code className={css.entryValue} data-loader-entry>{entry.entryId}</code>
                         <dl className={css.details}>
                           <div>
@@ -182,7 +183,16 @@ export function PluginInventorySettingsTab({ list, t }: PluginInventorySettingsT
                               <dd>{status}</dd>
                             </div>
                           ) : null}
+                          <div><dt>{t('features')}</dt><dd>{entry.features.join(' ')}</dd></div>
+                          <div><dt>{t('reads')}</dt><dd>{entry.reads}</dd></div>
+                          <div><dt>{t('changes')}</dt><dd>{entry.changes}</dd></div>
+                          <div><dt>{t('sends')}</dt><dd>{entry.sends}</dd></div>
+                          <div><dt>{t('network')}</dt><dd>{t(entry.networkAccess ? 'required' : 'notRequired')}</dd></div>
+                          <div><dt>{t('credentials')}</dt><dd>{t(entry.credentials ? 'required' : 'notRequired')}</dd></div>
+                          <div><dt>{t('agentAccess')}</dt><dd>{entry.agentAccess}</dd></div>
+                          <div><dt>{t('availability')}</dt><dd>{entry.unavailableReason ?? t('available')}</dd></div>
                         </dl>
+                        {entry.documentation == null ? null : <a href={entry.documentation} target="_blank" rel="noreferrer">{t('documentation')}</a>}
                       </div>
                     ) : null}
                   </li>

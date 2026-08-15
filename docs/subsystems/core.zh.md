@@ -348,6 +348,31 @@ async saveSelection(next: ModelSelection): Promise<void>
 
 Source: [`packages/core/agent-default-model/src/index.ts:64`](../../packages/core/agent-default-model/src/index.ts)
 
+<a id="ctxagentguidance--agentguidanceruntime"></a>
+
+### `ctx.agentGuidance` — `AgentGuidanceRuntime`
+
+Live configuration face shared with delegation consumers.
+
+```ts cordis-catalog
+/**
+ * Return the latest saved Agent configuration.
+ *
+ * @returns Current global, project, and helper Agent configuration.
+ */
+current(): Config
+
+/**
+ * Resolve one helper Agent from the latest saved configuration.
+ *
+ * @param id Stable helper Agent identifier.
+ * @returns Resolved prompt, model route, and tool permissions, or `undefined` for an unknown id.
+ */
+resolveAgent(id: string): ResolvedManagedAgent | undefined
+```
+
+Source: [`packages/context/agent-guidance/src/index.ts:127`](../../packages/context/agent-guidance/src/index.ts)
+
 <a id="ctxagentloop--agentloop"></a>
 
 ### `ctx.agentLoop` — `AgentLoop`

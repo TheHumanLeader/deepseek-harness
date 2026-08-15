@@ -1,4 +1,4 @@
-/** Browser registration for global main-Agent instructions. */
+/** Browser registration for visual Agent configuration. */
 
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
@@ -37,9 +37,18 @@ export function apply(ctx: ClientContext): void {
   })
   const injected = (): AgentGuidanceSectionInjected => ({
     hooks: { agentGuidance: scope },
-    setEnabled: enabled => scope.set('enabled', enabled),
-    savePrompt: prompt => scope.set('prompt', prompt),
-    resetPrompt: () => scope.unset('prompt'),
+    saveSettings: async (settings) => {
+      await scope.set('enabled', settings.enabled)
+      await scope.set('prompt', settings.prompt)
+      await scope.set('projects', settings.projects)
+      await scope.set('agents', settings.agents)
+    },
+    resetSettings: async () => {
+      await scope.unset('enabled')
+      await scope.unset('prompt')
+      await scope.unset('projects')
+      await scope.unset('agents')
+    },
   })
   const t = ctx.locale.bind(NS)
   ctx.slots.inject('settings.section', () => ctx.slots.register({

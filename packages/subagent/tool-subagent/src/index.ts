@@ -25,6 +25,14 @@ export const inject = ['tools', 'subagents', 'systemPrompt']
 /** Prompt order after bounded delegation policy and before child reporting. */
 const SUBAGENT_SECTION_ORDER = 116.5
 
+interface ManagedAgentResolver {
+  resolveAgent(id: string): {
+    agentOptions?: AgentOptions
+    prompt: string
+    toolFilter: { allow?: string[]; deny?: string[] }
+  } | undefined
+}
+
 /** Config: which registered provider this tool delegates to, plus child defaults. */
 export interface Config {
   /** The `ctx.subagents` provider name to start runs on (e.g. `spawn`, `acp`). */
@@ -46,6 +54,8 @@ export interface Config {
    * Follow-up adapters remain independently optional.
    */
   backgroundMode?: 'one-shot' | 'continuable'
+  /** Resolve the child prompt, model, and tool permissions from the live Agent settings. */
+  managedAgentSelector?: boolean
   /**
    * Agent options applied to every child; omitted fields use child-loop defaults.
    */
@@ -83,6 +93,7 @@ export const Config: z<Config> = z.object({
   toolName: z.string().default('subagent'),
   enableRunInBackground: z.boolean().default(true),
   backgroundMode: z.union(['one-shot', 'continuable'] as const).default('one-shot'),
+  managedAgentSelector: z.boolean().default(false),
   // Prevent Schemastery from materializing omitted agentOptions as `{}`.
   agentOptions: z.object({
     provider: z.string(),
@@ -289,6 +300,7 @@ export function apply(ctx: Context, config: Config): void {
       )
     }
     const wording = providerWording(provider.inheritsParentContext)
+    const managed = config.managedAgentSelector === true
     if (continuable && provider.prepareContinuable === undefined) {
       throw new Error(
         `tool-subagent: provider "${provider.name}" does not support \`backgroundMode: continuable\``,
@@ -296,7 +308,9 @@ export function apply(ctx: Context, config: Config): void {
     }
     disposeTool = ctx.tools.register(defineTool({
       name: toolName,
-      description: wording.description + (backgroundEnabled
+      description: (managed
+        ? 'Delegate a focused task to an Agent configured in Settings. Choose the Agent id listed in the current Agent instructions. '
+        : wording.description) + (backgroundEnabled
         // The completion notice is the continuation service's own behavior, not
         // a separately installed capability, so this promise holds whenever the
         // continuable background path is reachable at all.
@@ -305,6 +319,13 @@ export function apply(ctx: Context, config: Config): void {
           : ' This call waits for the result by default. Set `run_in_background: true` to return a job id; collect with `job_output` and stop with `job_kill`.'
         : ' This call waits for the subagent and returns its result.'),
       parameters: {
+        ...managed ? {
+          agent: {
+            type: 'string' as const,
+            required: true,
+            description: 'Configured Agent id, such as researcher, project-explorer, reviewer, or agent-manager.',
+          },
+        } : {},
         description: {
           type: 'string',
           required: true,
@@ -373,14 +394,22 @@ export function apply(ctx: Context, config: Config): void {
           throw new Error('subagent tool requires a calling agent (exec.agent was undefined)')
         }
 
+        const guidance = (ctx as unknown as { get(name: 'agentGuidance'): ManagedAgentResolver | undefined }).get('agentGuidance')
+        const managedAgent = managed ? guidance?.resolveAgent(args.agent ?? '') : undefined
+        if (managed && managedAgent === undefined) {
+          throw new Error(`managed Agent ${JSON.stringify(args.agent)} is not configured`)
+        }
         const maxDepth = typeof config.maxDepth === 'number' ? config.maxDepth : undefined
+        const agentOptions = managedAgent?.agentOptions ?? config.agentOptions
+        const persona = managedAgent?.prompt ?? config.persona
+        const toolFilter = managedAgent?.toolFilter ?? config.toolFilter
         const request = {
           label: args.description,
           prompt: [{ type: 'text', text: args.prompt }] as ContentBlock[],
           parent,
-          ...config.agentOptions !== undefined ? { agentOptions: config.agentOptions } : {},
-          ...config.persona !== undefined ? { persona: config.persona } : {},
-          ...config.toolFilter !== undefined ? { toolFilter: config.toolFilter } : {},
+          ...agentOptions !== undefined ? { agentOptions } : {},
+          ...persona !== undefined ? { persona } : {},
+          ...toolFilter !== undefined ? { toolFilter } : {},
           ...maxDepth !== undefined ? { maxDepth } : {},
         }
 

@@ -44,7 +44,7 @@ describe('global Agent guidance snapshot', () => {
 
     expect(result.stderr).toBe('')
     expect(normalized).toContain('Follow the stage the user requested.')
-    expect(normalized).toContain('Every search must answer a specific unresolved question.')
+    expect(normalized).toContain('Delegate external research to the researcher Agent.')
     expect(normalized.match(/"plugin":"agent-guidance"/g)).toHaveLength(1)
   }, LOADER_SMOKE_TEST_TIMEOUT_MS)
 })

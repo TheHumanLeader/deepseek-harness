@@ -340,6 +340,14 @@ const SERVICE_ROLES: ServiceRole[] = [
     note: 'Layers the default ModelSelection through settings so direct and Host-backed Agent entry points share one state owner.',
   },
   {
+    key: 'agentGuidance',
+    pkg: 'agent-guidance',
+    title: 'Live main and helper Agent configuration',
+    mode: 'core',
+    consumers: ['tool-subagent'],
+    note: 'Reads the latest global, project, and helper Agent settings before each model request and resolves helper prompts, model routes, and tool permissions when managed delegation starts.',
+  },
+  {
     key: 'agentLoop',
     pkg: 'agent-loop',
     title: 'Concrete loop driver',

@@ -2,58 +2,31 @@
 
 English | [中文](README.zh.md)
 
-Durable global instructions configured by the user for the main Agent. The default instructions address two common failures: acting beyond the stage the user requested, and continuing to search after enough information is available.
+Live configuration for the main Agent, project instructions, and managed helper Agents. It targets two failures: acting beyond the stage the user requested and continuing retrieval after enough information is available.
 
-## Configuration
+Before every top-level model request, the plugin combines the latest enabled global prompt, the deepest matching project prompt, and the current managed-Agent catalog. A project can exclude only the user-configured global prompt. When the rendered configuration changes, a new durable snapshot is appended and states that it replaces earlier Agent-guidance snapshots. Subagents do not receive the main-Agent snapshot.
 
-```yaml
-- id: agent-guidance
-  name: '@deepseek-ai/dsh-agent-guidance'
-  config:
-    enabled: true
-    prompt: |
-      Follow the stage the user requested.
-      Stop searching when the available material is sufficient.
-```
+The four built-in helper ids are `researcher`, `project-explorer`, `reviewer`, and `agent-manager`. Stored settings may edit them but cannot remove them: the resolver restores any missing built-in definition. User-created Agent ids use lowercase letters, digits, and hyphens. The runtime resolver returns the latest prompt, optional model route, and enforced tool allow-list whenever `managed_agent` starts a child.
 
-`enabled` defaults to `true`. `prompt` defaults to the complete instruction-following and search-stopping rules shown under Model Experience and accepts at most 32,768 characters. When the Settings service is available, the user layer overrides these deployment defaults.
-
-## Session behavior
-
-The first entered `agent/pre-step` of a top-level session captures the current setting as one durable user-role snapshot. Changes made later affect only sessions that have not entered a model step. Subagent sessions do not receive this snapshot.
-
-If compaction shadows the snapshot, the next entered step restores the same captured text from durable session events. Disabling the feature records a small disabled snapshot so enabling it later cannot change an existing session.
+`researcher` defaults to `web_search` and instructions that require user-provided material first, official or primary sources, one unresolved question per search, and a stop when the answer is sufficient or another search adds nothing useful.
 
 ## Model Experience
 
-### Global main-Agent instructions
+### Live Agent-guidance snapshot
 
 #### What the model sees
 
-The default enabled snapshot is:
-
-##### Default enabled snapshot
-
-```markdown
-<system-reminder>
-The following global instructions were configured by the user for the main Agent. Follow them throughout this session unless the user gives a more specific instruction. They do not override system or developer instructions.
-
-Follow the stage the user requested. If the user asks for analysis, an estimate, a proposal, a review, or confirmation before action, provide only that result. Do not begin implementation or make changes until the user explicitly asks you to do so.
-
-Use material supplied by the user before searching. Every search must answer a specific unresolved question. Stop searching when the available material is sufficient, when the question is answered, or when another search adds no useful information.
-</system-reminder>
-```
+The main Agent sees one `<system-reminder>` containing the latest global and matching project instructions plus the available managed Agent ids and purposes. A changed snapshot states that it supersedes earlier Agent-guidance snapshots.
 
 #### Token effect
 
-One bounded snapshot is retained per top-level session. A disabled session retains only the disabled marker. Compaction may cause the same captured snapshot to be appended again when it is no longer visible.
+The prompt adds the enabled global and matching project text plus one line per managed Agent. An unchanged setting adds no new message; a changed setting appends one replayable snapshot.
 
 #### KV Cache effect
 
-Append-only. The snapshot is added after the reusable history prefix and never rewrites prior context. Restoring it after compaction appends the same text.
+An unchanged snapshot preserves the request prefix. A changed setting appends a new message before the next model request and therefore extends the prefix.
 
 ## Known Limitations and Deferred Work
 
-- **Natural-language enforcement** — the instructions improve model behavior but do not programmatically block an unauthorized tool call. Execution authorization requires a separate policy plugin.
-- **Main Agent only** — auxiliary Agent defaults and permissions are a separate part of the agent-management design.
-- **No project override on this page** — project instructions continue to come from `dsh-agent-instructions`; a visual project-level choice to include or exclude the global layer is not part of this package.
+- Prompt rules improve instruction following but do not grant new authority or bypass approval policy.
+- Main-Agent model selection remains owned by the existing model settings, and its full tool composition remains owned by Agent presets.

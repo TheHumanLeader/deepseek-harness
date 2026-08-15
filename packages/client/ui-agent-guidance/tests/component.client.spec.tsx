@@ -12,8 +12,8 @@ afterEach(cleanup)
 
 const ready: SettingsScopeSnapshot<AgentGuidanceSettings> = {
   status: 'ready',
-  value: { enabled: true, prompt: 'Initial prompt.' },
-  base: { enabled: true, prompt: 'Default prompt.' },
+  value: { enabled: true, prompt: 'Initial prompt.', projects: [], agents: [] },
+  base: { enabled: true, prompt: 'Default prompt.', projects: [], agents: [] },
   user: {},
   revision: 0,
   writable: true,
@@ -24,17 +24,16 @@ function renderSection(
   state: SettingsScopeSnapshot<AgentGuidanceSettings>,
   actions: Partial<Omit<AgentGuidanceSectionInjected, 'hooks'>> = {},
 ) {
-  const setEnabled = actions.setEnabled ?? vi.fn(() => Promise.resolve())
-  const savePrompt = actions.savePrompt ?? vi.fn(() => Promise.resolve())
-  const resetPrompt = actions.resetPrompt ?? vi.fn(() => Promise.resolve())
+  const saveSettings = actions.saveSettings ?? vi.fn(() => Promise.resolve())
+  const resetSettings = actions.resetSettings ?? vi.fn(() => Promise.resolve())
   const props = {
     t: (key: keyof typeof en) => en[key],
     useAgentGuidance: <T,>(selector: (snapshot: typeof state) => T): T => selector(state),
-    setEnabled,
-    savePrompt,
-    resetPrompt,
-  } as AgentGuidanceSectionProps
-  return { ...render(<AgentGuidanceSection {...props} />), setEnabled, savePrompt, resetPrompt }
+    saveSettings,
+    resetSettings,
+    close: vi.fn(),
+  } as unknown as AgentGuidanceSectionProps
+  return { ...render(<AgentGuidanceSection {...props} />), saveSettings, resetSettings }
 }
 
 describe('AgentGuidanceSection', () => {
@@ -48,26 +47,26 @@ describe('AgentGuidanceSection', () => {
   })
 
   it('edits, saves, resets, toggles, and previews instructions', async () => {
-    const { setEnabled, savePrompt, resetPrompt } = renderSection(ready)
-    expect(screen.getByText(en.newSessionsOnly)).toBeTruthy()
-    const input = screen.getByRole('textbox') as HTMLTextAreaElement
+    const { saveSettings, resetSettings } = renderSection(ready)
+    expect(screen.getByText(en.live)).toBeTruthy()
+    const input = screen.getAllByRole('textbox')[0] as HTMLTextAreaElement
     fireEvent.change(input, { target: { value: 'Changed prompt.' } })
     expect(input.value).toBe('Changed prompt.')
-    expect(screen.getAllByText('Changed prompt.')).toHaveLength(2)
 
     fireEvent.click(screen.getByRole('button', { name: en.save }))
-    await waitFor(() => { expect(savePrompt).toHaveBeenCalledWith('Changed prompt.') })
+    await waitFor(() => { expect(saveSettings).toHaveBeenCalledWith(expect.objectContaining({ prompt: 'Changed prompt.' })) })
     fireEvent.click(screen.getByRole('checkbox'))
-    await waitFor(() => { expect(setEnabled).toHaveBeenCalledWith(false) })
+    fireEvent.click(screen.getByRole('button', { name: en.save }))
+    await waitFor(() => { expect(saveSettings).toHaveBeenLastCalledWith(expect.objectContaining({ enabled: false })) })
     fireEvent.click(screen.getByRole('button', { name: en.reset }))
-    await waitFor(() => { expect(resetPrompt).toHaveBeenCalled() })
+    await waitFor(() => { expect(resetSettings).toHaveBeenCalled() })
   })
 
   it('shows saving state until a write settles', async () => {
     let settle!: () => void
-    const savePrompt = vi.fn(() => new Promise<void>((resolve) => { settle = resolve }))
-    renderSection(ready, { savePrompt })
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Pending.' } })
+    const saveSettings = vi.fn(() => new Promise<void>((resolve) => { settle = resolve }))
+    renderSection(ready, { saveSettings })
+    fireEvent.change(screen.getAllByRole('textbox')[0]!, { target: { value: 'Pending.' } })
     fireEvent.click(screen.getByRole('button', { name: en.save }))
     expect((await screen.findByRole('button', { name: en.saving })).hasAttribute('disabled')).toBe(true)
     settle()
@@ -76,10 +75,27 @@ describe('AgentGuidanceSection', () => {
     })
   })
 
+  it('adds project instructions and a user Agent to the saved configuration', async () => {
+    const { saveSettings } = renderSection(ready)
+    fireEvent.click(screen.getByRole('button', { name: en.addProject }))
+    fireEvent.change(screen.getByRole('textbox', { name: en.projectPath }), { target: { value: 'C:\\work\\app' } })
+    fireEvent.change(screen.getByRole('textbox', { name: en.projectPrompt }), { target: { value: 'Run focused tests.' } })
+    fireEvent.click(screen.getByRole('button', { name: en.addAgent }))
+    fireEvent.click(screen.getByText(en.newAgent))
+    fireEvent.change(screen.getByRole('textbox', { name: en.purpose }), { target: { value: 'Check releases.' } })
+    fireEvent.click(screen.getByRole('button', { name: en.save }))
+    await waitFor(() => {
+      expect(saveSettings).toHaveBeenCalledWith(expect.objectContaining({
+        projects: [{ path: 'C:\\work\\app', prompt: 'Run focused tests.', excludeGlobal: false }],
+        agents: [expect.objectContaining({ purpose: 'Check releases.' })],
+      }))
+    })
+  })
+
   it('disables every write control for a read-only namespace', () => {
     renderSection({ ...ready, writable: false })
     expect(screen.getByText(en.readOnly)).toBeTruthy()
-    expect(screen.getByRole('textbox').hasAttribute('disabled')).toBe(true)
+    expect(screen.getAllByRole('textbox').every(input => input.hasAttribute('disabled'))).toBe(true)
     expect(screen.getByRole('checkbox').hasAttribute('disabled')).toBe(true)
     expect(screen.getByRole('button', { name: en.save }).hasAttribute('disabled')).toBe(true)
     expect(screen.getByRole('button', { name: en.reset }).hasAttribute('disabled')).toBe(true)

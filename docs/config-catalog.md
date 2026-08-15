@@ -109,16 +109,50 @@ Source: [`packages/core/agent-default-model/src/index.ts:41`](../packages/core/a
 Requires: `agents`
 
 ```ts config-catalog
-/** User-configurable global main-Agent instructions. */
+/** Complete visual Agent-instruction configuration. */
 export interface Config {
-  /** Whether the configured prompt is included in new top-level sessions. */
+  /** Whether the user-configured global main-Agent prompt is active. */
   enabled: boolean
-  /** Instructions captured for each new top-level session. */
+  /** User-configured global main-Agent instructions. */
   prompt: string
+  /** Project instruction layers matched by working directory. */
+  projects: ProjectGuidance[]
+  /** Editable built-in and user-created helper Agent definitions. */
+  agents: ManagedAgentConfig[]
+}
+
+/** One project-specific instruction layer. */
+export interface ProjectGuidance {
+  /** Project root used for matching the current working directory. */
+  path: string
+  /** Instructions added for the matching project. */
+  prompt: string
+  /** Whether this project omits the user-configured global prompt. */
+  excludeGlobal: boolean
+}
+
+/** User-editable configuration for one helper Agent. */
+export interface ManagedAgentConfig {
+  /** Stable lowercase identifier selected by the main Agent. */
+  id: string
+  /** User-facing Agent name. */
+  name: string
+  /** Short responsibility shown to the main Agent. */
+  purpose: string
+  /** Instructions sent to this helper Agent. */
+  prompt: string
+  /** Optional model provider override. */
+  provider: string
+  /** Optional model name override. */
+  model: string
+  /** Exact tool names available to this helper Agent. */
+  tools: string[]
+  /** Whether this helper may invoke another managed Agent. */
+  allowDelegation: boolean
 }
 ```
 
-Source: [`packages/context/agent-guidance/src/index.ts:43`](../packages/context/agent-guidance/src/index.ts)
+Source: [`packages/context/agent-guidance/src/index.ts:59`](../packages/context/agent-guidance/src/index.ts)
 
 <a id="deepseek-aidsh-agent-instructions"></a>
 
@@ -2635,6 +2669,8 @@ export interface Config {
    * Follow-up adapters remain independently optional.
    */
   backgroundMode?: 'one-shot' | 'continuable'
+  /** Resolve the child prompt, model, and tool permissions from the live Agent settings. */
+  managedAgentSelector?: boolean
   /**
    * Agent options applied to every child; omitted fields use child-loop defaults.
    */
@@ -2670,7 +2706,7 @@ export interface Config {
 
 Depends on: [`AgentOptions`](subsystems/core.md)
 
-Source: [`packages/subagent/tool-subagent/src/index.ts:29`](../packages/subagent/tool-subagent/src/index.ts)
+Source: [`packages/subagent/tool-subagent/src/index.ts:37`](../packages/subagent/tool-subagent/src/index.ts)
 
 <a id="deepseek-aidsh-tool-subagent-report"></a>
 

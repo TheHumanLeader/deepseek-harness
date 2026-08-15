@@ -15,7 +15,7 @@ function message(
       kind: 'plugin',
       plugin: 'agent-guidance',
       form: 'snapshot',
-      sections: [{ name: 'global-agent-guidance', text }],
+      sections: [{ name: 'agent-guidance', text }],
     }) as never,
   })
 }
@@ -73,7 +73,7 @@ describe('agent-guidance invariant', () => {
     { kind: 'plugin', plugin: 'agent-guidance', form: 'instructions', sections: [] },
     { kind: 'plugin', plugin: 'agent-guidance', form: 'snapshot', sections: [] },
     { kind: 'plugin', plugin: 'agent-guidance', form: 'snapshot', sections: [{ name: 'wrong', text: 'Fixed.' }] },
-    { kind: 'plugin', plugin: 'agent-guidance', form: 'snapshot', sections: [{ name: 'global-agent-guidance', text: 'Different.' }] },
+    { kind: 'plugin', plugin: 'agent-guidance', form: 'snapshot', sections: [{ name: 'agent-guidance', text: 'Different.' }] },
   ])('rejects incomplete or mismatched source metadata: %o', async (source) => {
     await expect(lateCheck([message('Fixed.', { source })]))
       .rejects.toThrow(/exact durable snapshot text/)
@@ -86,9 +86,9 @@ describe('agent-guidance invariant', () => {
       .rejects.toThrow(/only to top-level Agent sessions/)
   })
 
-  it('rejects a changed snapshot later in the same session', async () => {
+  it('accepts a changed snapshot later in the same session', async () => {
     await expect(lateCheck([message('First.'), message('Second.')]))
-      .rejects.toThrow(/remain fixed/)
+      .resolves.toBeDefined()
   })
 
   it('validates a newly appended owned event through dispatch', async () => {
@@ -99,6 +99,6 @@ describe('agent-guidance invariant', () => {
     session.append('user/message', message('Second.'), { surfaceOp: 'append' })
     expect(() => {
       ctx.emit('session/event', session, event(message('Second.'), 1))
-    }).toThrow(/remain fixed/)
+    }).not.toThrow()
   })
 })

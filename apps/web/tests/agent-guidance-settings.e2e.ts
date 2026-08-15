@@ -43,8 +43,8 @@ describe('web e2e: global main-Agent instructions', () => {
     await page.getByRole('button', { name: '设置', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: '设置' })
     await dialog.waitFor({ timeout: 10_000 })
-    await dialog.getByRole('button', { name: 'Agent 指令', exact: true }).click()
-    await dialog.getByRole('heading', { name: '全局主 Agent 指令' }).waitFor({ timeout: 10_000 })
+    await dialog.getByRole('button', { name: 'Agent 配置', exact: true }).click()
+    await dialog.getByRole('heading', { name: 'Agent 配置', exact: true }).waitFor({ timeout: 10_000 })
     return dialog
   }
 
@@ -55,13 +55,13 @@ describe('web e2e: global main-Agent instructions', () => {
   it('shows the two default rules in the shipped settings page', async () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-agent-guidance-default'))
     const dialog = await openSection()
-    const prompt = dialog.getByRole('textbox', { name: '指令内容' })
+    const prompt = dialog.getByRole('textbox', { name: '提示词', exact: true }).first()
     await prompt.waitFor({ timeout: 10_000 })
     await expect.poll(() => prompt.inputValue(), { timeout: 5_000 })
       .toContain('Follow the stage the user requested.')
     const value = await prompt.inputValue()
     expect(value).toContain('Follow the stage the user requested.')
-    expect(value).toContain('Every search must answer a specific unresolved question.')
+    expect(value).toContain('Delegate external research to the researcher Agent.')
     expect(await dialog.getByRole('checkbox', { name: '使用全局指令' }).isChecked()).toBe(true)
 
     const snapshot = await captureStableAria(page, '[role="dialog"]', scaffold.workspaceCwd)
@@ -72,11 +72,11 @@ describe('web e2e: global main-Agent instructions', () => {
   it('persists an edit and restores the deployment default', async () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-agent-guidance-write'))
     const dialog = page.getByRole('dialog', { name: '设置' })
-    const prompt = dialog.getByRole('textbox', { name: '指令内容' })
+    const prompt = dialog.getByRole('textbox', { name: '提示词', exact: true }).first()
     const edited = '只完成用户要求的当前阶段。资料已经足够时停止检索。'
 
     await prompt.fill(edited)
-    await dialog.getByRole('button', { name: '保存', exact: true }).click()
+    await dialog.getByRole('button', { name: '保存全部', exact: true }).click()
     await expect.poll(async () => await settingsDocument(), { timeout: 10_000 })
       .toContain('agent-guidance:')
     await expect.poll(async () => await settingsDocument(), { timeout: 10_000 })

@@ -7,7 +7,7 @@ import Loader from '@deepseek-ai/cordis-plugin-loader'
 import { CallId } from '@deepseek-ai/dsh-llm'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime, { TOOL_ABORTED_BEFORE_DISPATCH } from '@deepseek-ai/dsh-tools'
-import { assembleContextFor, type Agent } from '@deepseek-ai/dsh-agent'
+import { assembleContextFor, type Agent, type AgentOptions } from '@deepseek-ai/dsh-agent'
 import AgentRegistry from '@deepseek-ai/dsh-agent'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
@@ -655,6 +655,52 @@ describe('dsh-tool-subagent', () => {
     expect(seen?.persona).toBe('You are the child.')
     expect(seen?.toolFilter).toMatchObject({ deny: ['subagent'] })
     expect(seen?.maxDepth).toBe(2)
+  })
+
+  it('reads a managed Agent configuration when the delegation starts', async () => {
+    let seen: { persona?: string; toolFilter?: unknown; agentOptions?: AgentOptions } | undefined
+    const ctx = new Context()
+    await ctx.plugin(SystemPrompt)
+    await ctx.plugin(ToolRuntime)
+    await ctx.plugin(SubagentRuntime)
+    ctx.provide('agentGuidance' as never, {
+      resolveAgent: (id: string) => id === 'researcher' ? {
+        prompt: 'Current researcher prompt.',
+        agentOptions: { provider: 'route', model: 'model' },
+        toolFilter: { allow: ['managed_agent'] },
+      } : undefined,
+    } as never)
+    ctx.subagents.registerProvider({
+      name: 'managed-capture',
+      capabilities: { outputSchema: false, depthLimit: true, toolFilter: true, persona: true },
+      inheritsParentContext: false,
+      start: async (request) => {
+        seen = request
+        return {
+          id: SessionId('managed-child'),
+          localAgent: undefined,
+          result: Promise.resolve({ output: [{ type: 'text', text: 'ok' }], stopReason: 'completed' as const }),
+          dispose: async () => {},
+        }
+      },
+    })
+    await ctx.plugin(tool, {
+      provider: 'managed-capture',
+      toolName: 'managed_agent',
+      managedAgentSelector: true,
+      enableRunInBackground: false,
+      maxDepth: 2,
+    })
+    await ctx.tools.execute({
+      signal: testToolSignal,
+      callId: CallId('managed-call'),
+      name: 'managed_agent',
+      arguments: { agent: 'researcher', description: 'research', prompt: 'find it' },
+      agent: fakeAgent(),
+    })
+    expect(seen?.persona).toBe('Current researcher prompt.')
+    expect(seen?.agentOptions).toEqual({ provider: 'route', model: 'model' })
+    expect(seen?.toolFilter).toEqual({ allow: ['managed_agent'] })
   })
 
   it.each([

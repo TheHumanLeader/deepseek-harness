@@ -37,17 +37,12 @@ function textOf(event: SessionEvent<'user/message'>, fail: InvariantFailure): st
 }
 
 function validateSession(session: Session, fail: InvariantFailure): void {
-  let captured: string | undefined
   for (const event of session.events) {
     if (!owned(event)) continue
     if (session.header.origin === 'subagent' || (session.header.delegationDepth ?? 0) > 0) {
       fail('agent-guidance snapshots belong only to top-level Agent sessions')
     }
-    const text = textOf(event, fail)
-    if (captured !== undefined && text !== captured) {
-      fail('agent-guidance must remain fixed for the complete session')
-    }
-    captured = text
+    textOf(event, fail)
   }
 }
 

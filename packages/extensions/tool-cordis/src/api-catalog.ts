@@ -101,6 +101,25 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'agentGuidance',
+    summary: 'Live configuration face shared with delegation consumers.',
+    description: 'Live configuration face shared with delegation consumers.',
+    methods: [
+      {
+        signature: 'current(): Config',
+        description: 'Return the latest saved Agent configuration.',
+        parameters: [],
+        returns: 'Current global, project, and helper Agent configuration.',
+      },
+      {
+        signature: 'resolveAgent(id: string): ResolvedManagedAgent | undefined',
+        description: 'Resolve one helper Agent from the latest saved configuration.',
+        parameters: [{ name: 'id', description: 'Stable helper Agent identifier.' }],
+        returns: 'Resolved prompt, model route, and tool permissions, or `undefined` for an unknown id.',
+      },
+    ],
+  },
+  {
     key: 'agentLoop',
     summary: 'Concrete agent factory and driver service.',
     description: 'Concrete agent factory and driver service.',
@@ -3358,6 +3377,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface LspRange {\n    readonly start: LspPosition;\n    readonly end: LspPosition;\n}',
   },
   {
+    name: 'ManagedAgentConfig',
+    declaration: 'export interface ManagedAgentConfig {\n    id: string;\n    name: string;\n    purpose: string;\n    prompt: string;\n    provider: string;\n    model: string;\n    tools: string[];\n    allowDelegation: boolean;\n}',
+  },
+  {
     name: 'ManualCompactAgentContext',
     declaration: 'export interface ManualCompactAgentContext extends CompactionAgentContext {\n    runMaintenance<T>(task: (signal: AbortSignal) => Promise<T>): Promise<T>;\n}',
   },
@@ -3600,6 +3623,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'ResolvedCredential',
     declaration: 'export interface ResolvedCredential {\n    value: string;\n    source: string;\n}',
+  },
+  {
+    name: 'ResolvedManagedAgent',
+    declaration: 'export interface ResolvedManagedAgent extends ManagedAgentConfig {\n    builtIn: boolean;\n    agentOptions?: AgentOptions;\n    toolFilter: ToolRestriction;\n}',
   },
   {
     name: 'ResolvedNormalRetryPolicy',

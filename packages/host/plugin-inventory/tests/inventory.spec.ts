@@ -55,33 +55,33 @@ describe('PluginInventoryGateway', () => {
     const snapshot = inventory.list()
     expect(snapshot.entries).toHaveLength(3)
     expect(snapshot.entries).toEqual(expect.arrayContaining([
-      {
+      expect.objectContaining({
         entryId: activeId,
         moduleName: 'cordis:active',
         enabled: true,
         fiberPhase: 'active',
-      },
-      {
+      }),
+      expect.objectContaining({
         entryId: pendingId,
         moduleName: 'cordis:pending',
         enabled: true,
         fiberPhase: 'pending',
-      },
-      {
+      }),
+      expect.objectContaining({
         entryId: disabledId,
         moduleName: 'cordis:not-installed',
         enabled: false,
         fiberPhase: null,
-      },
+      }),
     ]))
 
     await ctx.loader.update(activeId, { disabled: true })
-    expect(inventory.list().entries.find(entry => entry.entryId === activeId)).toEqual({
+    expect(inventory.list().entries.find(entry => entry.entryId === activeId)).toEqual(expect.objectContaining({
       entryId: activeId,
       moduleName: 'cordis:active',
       enabled: false,
       fiberPhase: null,
-    })
+    }))
 
     await ctx.loader.remove(pendingId)
     expect(inventory.list().entries.some(entry => entry.entryId === pendingId)).toBe(false)

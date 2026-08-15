@@ -18,7 +18,7 @@ function ok<T>(value: T): RpcResponse<T> {
   return { rpcId: `guidance-${rpc++}` as never, result: { ok: true, value } }
 }
 
-function view(value = { enabled: true, prompt: 'Initial prompt.' }, revision = 0): SettingsNamespaceView {
+function view(value = { enabled: true, prompt: 'Initial prompt.', projects: [], agents: [] }, revision = 0): SettingsNamespaceView {
   return {
     ns: 'agent-guidance',
     schema: {},
@@ -35,7 +35,7 @@ async function bench() {
   ctx.provide('locale', new LocaleRuntime(ctx))
   new TestRemote(ctx)
   const mutate = vi.fn((_request: { ops: Array<{ op: string; path: string[]; value?: unknown }> }) =>
-    Promise.resolve(ok(view({ enabled: false, prompt: 'Initial prompt.' }, 1))))
+    Promise.resolve(ok(view({ enabled: false, prompt: 'Initial prompt.', projects: [], agents: [] }, 1))))
   ctx.provide('connection', {
     isLoopback: true,
     api: {
@@ -73,7 +73,7 @@ describe('ui-agent-guidance registration', () => {
 
     const entry = slots.entries('settings.section')[0]!
     expect(entry.options).toMatchObject({ id: 'agent-guidance', order: 12 })
-    expect(resolveSlotLabel(entry.options.label)).toBe('Agent 指令')
+    expect(resolveSlotLabel(entry.options.label)).toBe('Agent 配置')
     const face = (entry.inject as unknown as () => AgentGuidanceSectionInjected)()
     await vi.waitFor(() => {
       expect(face.hooks.agentGuidance.getSnapshot()).toMatchObject({
@@ -82,13 +82,17 @@ describe('ui-agent-guidance registration', () => {
       })
     })
 
-    await face.setEnabled(false)
-    await face.savePrompt('Changed.')
-    await face.resetPrompt()
+    await face.saveSettings({ enabled: false, prompt: 'Changed.', projects: [], agents: [] })
+    await face.resetSettings()
     expect(mutate.mock.calls.map(([request]) => request.ops[0])).toEqual([
       { op: 'set', path: ['enabled'], value: false },
       { op: 'set', path: ['prompt'], value: 'Changed.' },
+      { op: 'set', path: ['projects'], value: [] },
+      { op: 'set', path: ['agents'], value: [] },
+      { op: 'unset', path: ['enabled'] },
       { op: 'unset', path: ['prompt'] },
+      { op: 'unset', path: ['projects'] },
+      { op: 'unset', path: ['agents'] },
     ])
 
     await fiber.dispose()
@@ -105,8 +109,8 @@ describe('ui-agent-guidance registration', () => {
 
 describe('agent-guidance settings decoder', () => {
   it('accepts a complete section', () => {
-    expect(decodeSettings({ enabled: false, prompt: 'Rule.' }))
-      .toEqual({ enabled: false, prompt: 'Rule.' })
+    const complete = { enabled: false, prompt: 'Rule.', projects: [], agents: [] }
+    expect(decodeSettings(complete)).toEqual(complete)
   })
 
   it.each([null, [], 'text', { enabled: 'yes', prompt: 'Rule.' }, { enabled: true }])(
