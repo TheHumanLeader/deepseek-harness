@@ -115,8 +115,9 @@ const DEFAULT_MAX_MESSAGES = 50
 
 /**
  * Non-model settings namespaces intentionally served to the Web client. The
- * plugin-owned entries (`agent-loop`, `bash`, `web-search-deepseek`) are the
- * host-plane sections the plugin configuration page edits; a namespace absent
+ * plugin-owned entries (`agent-guidance`, `agent-loop`, `shell`,
+ * `web-search-deepseek`) are the host-plane sections that shipped settings
+ * pages edit; a namespace absent
  * here answers `settings-not-exposed` even when its owner registered it, so
  * adding a section to that page is a decision made here rather than by the
  * registering plugin. Moving that declaration to `settings.register()`, so a
@@ -124,7 +125,8 @@ const DEFAULT_MAX_MESSAGES = 50
  * is deferred work.
  */
 const WEB_SETTINGS_NAMESPACES = [
-  'agent-loop', 'shell', 'locale', 'permission', 'ui-conversation', 'ui-theme', 'web-search-deepseek',
+  'agent-guidance', 'agent-loop', 'shell', 'locale', 'permission', 'ui-conversation', 'ui-theme',
+  'web-search-deepseek',
 ] as const
 
 /** Provider work budget: at most 100 calls and 2,000 inspected hits. */

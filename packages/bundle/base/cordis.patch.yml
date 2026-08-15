@@ -78,6 +78,12 @@
     - id: settings
       name: '@deepseek-ai/dsh-settings-file'
 
+    # User-configured global main-Agent instructions. The value is captured
+    # into durable history when a top-level session first enters a model step,
+    # so later settings edits affect only sessions that have not started.
+    - id: agent-guidance
+      name: '@deepseek-ai/dsh-agent-guidance'
+
     # Credential sources: inherited environment over the managed
     # `$DSH_HOME/.credentials.yaml`, with project and user `.env` fallbacks.
     # Adapters resolve references per request; the Models page writes only the

@@ -230,7 +230,7 @@ function forwardedSettings(ns: string): HostFrame {
     type: 'host/remote-event',
     event: 'settings/document-updated',
     // The revision is the Host's own counter, so the matcher is the assertion.
-    args: [ns, expect.any(Number)], // oxlint-disable-line typescript/no-unsafe-assignment
+    args: [ns, expect.any(Number)],
   }
 }
 
@@ -347,6 +347,10 @@ describe('settings domain', () => {
     ctx.settings.register(settingsNamespace('shell'), z.object({
       timeoutMs: z.number().default(120_000),
     }))
+    ctx.settings.register(settingsNamespace('agent-guidance'), z.object({
+      enabled: z.boolean().default(true),
+      prompt: z.string().default('Follow the requested stage.'),
+    }))
     ctx.settings.register(settingsNamespace('agent-loop'), z.object({
       maxParallelToolCalls: z.number().default(10),
     }))
@@ -358,7 +362,7 @@ describe('settings domain', () => {
     const value = expectOk(await api.settings.describe(request({})))
     expect(value.namespaces.map(view => view.ns)).toEqual([
       'llm-deepseek', 'permission', 'ui-theme', 'locale', 'ui-conversation',
-      'shell', 'agent-loop', 'web-search-deepseek',
+      'shell', 'agent-guidance', 'agent-loop', 'web-search-deepseek',
     ])
     const permission = expectOk(await api.settings.mutate(request({
       ns: 'permission',
@@ -385,6 +389,14 @@ describe('settings domain', () => {
       ops: [{ op: 'set', path: ['timeoutMs'], value: 5_000 }],
     })))
     expect(bash.value).toEqual({ timeoutMs: 5_000 })
+    const agentGuidance = expectOk(await api.settings.mutate(request({
+      ns: 'agent-guidance',
+      ops: [{ op: 'set', path: ['prompt'], value: 'Stop after the requested stage.' }],
+    })))
+    expect(agentGuidance.value).toEqual({
+      enabled: true,
+      prompt: 'Stop after the requested stage.',
+    })
     const agentLoop = expectOk(await api.settings.mutate(request({
       ns: 'agent-loop',
       ops: [{ op: 'set', path: ['maxParallelToolCalls'], value: 2 }],

@@ -1,0 +1,32 @@
+- dialog "设置":
+  - navigation:
+    - text: 设置
+    - button "通用设置":
+      - img
+      - text: 通用设置
+    - button "模型":
+      - img
+      - text: 模型
+    - button "Agent 指令":
+      - img
+      - text: Agent 指令
+    - button "插件":
+      - img
+      - text: 插件
+    - button "Agent 预设":
+      - img
+      - text: Agent 预设
+  - button "打开配置文件"
+  - button "关闭":
+    - img
+    - text: 关闭
+  - heading "全局主 Agent 指令" [level=2]
+  - paragraph: 统一设置主 Agent 在不同项目中的工作方式。
+  - paragraph: 修改只对之后开始的主 Agent 会话生效。正在运行的会话继续使用开始时的指令。
+  - checkbox "使用全局指令 辅助 Agent 不会收到这里的指令。" [checked]
+  - strong: 使用全局指令
+  - text: 辅助 Agent 不会收到这里的指令。 指令内容 填写适用于不同任务和项目的直接规则。
+  - textbox "指令内容 填写适用于不同任务和项目的直接规则。": Follow the stage the user requested. If the user asks for analysis, an estimate, a proposal, a review, or confirmation before action, provide only that result. Do not begin implementation or make changes until the user explicitly asks you to do so. Use material supplied by the user before searching. Every search must answer a specific unresolved question. Stop searching when the available material is sufficient, when the question is answered, or when another search adds no useful information.
+  - button "保存" [disabled]
+  - button "恢复默认"
+  - group: 主 Agent 将收到的内容

@@ -102,6 +102,24 @@ export interface Config {
 
 Source: [`packages/core/agent-default-model/src/index.ts:41`](../packages/core/agent-default-model/src/index.ts)
 
+<a id="deepseek-aidsh-agent-guidance"></a>
+
+## `@deepseek-ai/dsh-agent-guidance`
+
+Requires: `agents`
+
+```ts config-catalog
+/** User-configurable global main-Agent instructions. */
+export interface Config {
+  /** Whether the configured prompt is included in new top-level sessions. */
+  enabled: boolean
+  /** Instructions captured for each new top-level session. */
+  prompt: string
+}
+```
+
+Source: [`packages/context/agent-guidance/src/index.ts:43`](../packages/context/agent-guidance/src/index.ts)
+
 <a id="deepseek-aidsh-agent-instructions"></a>
 
 ## `@deepseek-ai/dsh-agent-instructions`
@@ -3031,6 +3049,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 - `@deepseek-ai/dsh-client-locale` ([`packages/client/locale/src/index.ts`](../packages/client/locale/src/index.ts))
 - `@deepseek-ai/dsh-client-modules` — requires `webServer` · `loader` ([`packages/client/modules/src/index.ts`](../packages/client/modules/src/index.ts))
 - `@deepseek-ai/dsh-client-runtime` ([`packages/client/runtime/src/index.ts`](../packages/client/runtime/src/index.ts))
+- `@deepseek-ai/dsh-client-ui-agent-guidance` ([`packages/client/ui-agent-guidance/src/index.ts`](../packages/client/ui-agent-guidance/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-agent-preset` ([`packages/client/ui-agent-preset/src/index.ts`](../packages/client/ui-agent-preset/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-commands` ([`packages/client/ui-commands/src/index.ts`](../packages/client/ui-commands/src/index.ts))
 - `@deepseek-ai/dsh-client-ui-conversation` ([`packages/client/ui-conversation/src/index.ts`](../packages/client/ui-conversation/src/index.ts))
